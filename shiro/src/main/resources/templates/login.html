@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>Title</title>
+</head>
+<body>
+
+<h1>登录</h1>
+<hr>
+
+<form th:action="@{/login}" method="post">
+    <p>用户名：<input type="text" name="username"></p>
+
+    <p>密 码：<input type="password" name="password"></p>
+
+    <p>
+        验证码：<input type="text" name="validateCode">
+        <a href="javascript:void(0);" title="点击更换验证码">
+            <img th:src="@{/captcha/captchaImage}" class="imgCode"/>
+        </a>
+    </p>
+
+    <!--提示-->
+    <p class="msg" th:text="${msg}" style="color: red"></p>
+
+    <p><input type="submit"></p>
+</form>
+<script type="text/javascript">
+    let imgCode = document.getElementsByClassName("imgCode")[0];
+    imgCode.onclick = function () {
+        this.src = "/captcha/captchaImage?type=math&s=" + Math.random();
+    }
+</script>
+</body>
+</html>
