@@ -1,0 +1,17 @@
+# 应用名称
+spring:
+  application:
+    name: ehcache
+# 应用服务 WEB 访问端口
+server:
+  port: 8081
+
+#缓存配置
+framework:
+  cache:
+    ehcache:
+      heap: 1000
+      off-heap: 100
+      disk: 500
+      disk-dir: ${java.io.tmpdir}/boot-ehcache
+      ttl-in-seconds: 3600
