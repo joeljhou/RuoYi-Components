@@ -2119,5 +2119,134 @@ public ShiroDialect shiroDialect() {
 </html>
 ```
 
+# 04.Thymeleaf 模板引擎
 
+**参考：**http://c.biancheng.net/spring_boot/thymeleaf.html
+
+## Thymeleaf 简介
+
+Thymeleaf 是新一代 Java 模板引擎，与 Velocity、FreeMarker 等传统 Java 模板引擎不同，Thymeleaf 支持 HTML 原型，其文件后缀为“.html”，因此它可以直接被浏览器打开，此时浏览器会忽略未定义的 Thymeleaf 标签属性，展示 thymeleaf 模板的静态页面效果；当通过 Web 应用程序访问时，Thymeleaf 会动态地替换掉静态内容，使页面动态显示。
+
+Thymeleaf 通过在 html 标签中，增加额外属性来达到“模板+数据”的展示方式，示例代码如下。
+
+```html
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>Title</title>
+</head>
+<body>
+<!--th:text 为 Thymeleaf 属性，用于在展示文本-->
+<h1 th:text="迎您来到Thymeleaf">欢迎您访问静态页面 HTML</h1>
+</body>
+</html>
+```
+
+## Thymeleaf 语法规则
+
+在使用 Thymeleaf 之前，首先要在页面的 html 标签中声明名称空间，示例代码如下。
+
+```html
+xmlns:th="http://www.thymeleaf.org"
+```
+
+> 在 html 标签中声明此名称空间，可避免编辑器出现 html 验证错误，但这一步并非必须进行的，即使我们不声明该命名空间，也不影响 Thymeleaf 的使用。
+
+Thymeleaf 作为一种模板引擎，它拥有自己的语法规则。Thymeleaf 语法分为以下 2 类：
+
+### 标准表达式语法
+
+1. 获取属性：`${object.property}`，其中 `object` 是从数据模型中获取的对象，`property` 是对象的属性名称。
+2. 方法调用：`${object.method()}`，其中 `method()` 是从对象中调用的方法。
+3. 使用方法参数：`${object.method(arg1, arg2)}`，其中 `arg1` 和 `arg2` 是方法的参数。
+4. 集合操作：`${collection.size()}` 获取集合的大小，`${collection.isEmpty()}` 判断集合是否为空，`${collection.iterator()}` 获取集合的迭代器等。
+5. 数组操作：`${array.length}` 获取数组的长度，`${array[0]}` 获取数组的第一个元素等。
+6. 运算符：支持加、减、乘、除、取余、大于、小于、等于、不等于等运算符，例如 `${num1 + num2}`、`${str1 == str2}` 等。
+7. 内联选择器：`${#ids.size()}` 获取文档中具有 `id` 属性的元素数量，`${#request.getParameter('id')}` 获取 HTTP 请求参数的值等。
+8. 内置对象：Thymeleaf 提供一些内置对象，如 `${#ctx.request.contextPath}` 获取当前请求的上下文路径，`${#locale.language}` 获取当前区域设置的语言等。
+9. 特殊字符：支持使用 `\` 转义特殊字符，如 `${'Hello\'s World!'}` 将显示为 `Hello's World!`。
+
+### th 属性
+
+- th:text：用于设置HTML标签的文本内容
+- th:if：用于条件判断
+- th:switch和th:case：用于实现类似于switch语句的多条件判断
+- th:href：用于设置链接的URL地址
+- th:src：用于设置图像或其他媒体的URL地址
+- th:each：用于迭代集合或数组，并将每个元素应用到一个HTML块中
+- th:object：用于指定用于当前表单的对象
+
+这些th属性可以在HTML标签中使用，以便在模板中使用Thymeleaf的功能和语法。例如：
+
+```html
+<p th:text="${message}">Hello, World!</p>
+```
+
+## Spring Boot整合Thymeleaf
+
+以下是使用Spring Boot和Thymeleaf构建Web应用程序的一些简单步骤：
+
+1. 添加Thymeleaf依赖
+
+在pom.xml中添加以下依赖：
+
+```xml
+<dependency>
+    <groupId>org.springframework.boot</groupId>
+    <artifactId>spring-boot-starter-thymeleaf</artifactId>
+</dependency>
+```
+
+2. 配置Thymeleaf
+
+```yaml
+# 应用名称
+spring:
+  application:
+    name: thymeleaf
+  # 配置模板引擎
+  thymeleaf:
+    encoding: UTF-8
+    mode: HTML
+    prefix: classpath:/templates/
+    suffix: .html
+```
+
+3. 创建Thymeleaf模板
+
+在src/main/resources/templates目录下创建一个名为“index.html”的文件，并添加以下内容：
+
+```html
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>Spring Boot and Thymeleaf</title>
+</head>
+<body>
+    <h1 th:text="${message}"></h1>
+</body>
+</html>
+```
+
+4. 创建控制器
+
+创建一个名为“MainController”的控制器，并添加以下内容：
+
+```java
+@Controller
+public class MainController {
+
+    @GetMapping("/")
+    public String index(Model model) {
+        model.addAttribute("message", "Hello, World!");
+        return "index";
+    }
+}
+```
+
+5. 运行应用程序
+
+运行应用程序并在浏览器中访问 [http://localhost:8080](http://localhost:8080 )，您应该会看到“Hello, World!”在页面上显示。
 
