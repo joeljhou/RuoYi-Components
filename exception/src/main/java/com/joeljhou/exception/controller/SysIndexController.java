@@ -13,7 +13,7 @@ public class SysIndexController {
      * 首页方法
      */
     @GetMapping("/login")
-    public R<Void> login(@Validated User user) {
+    public R<String> login(@Validated User user) {
         //模拟用户未登录，抛出业务逻辑异常
         throw BusinessErrorCode.LOGIN_ERROR.exception(user.getUsername());
     }
