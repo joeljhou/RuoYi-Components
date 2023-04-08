@@ -694,7 +694,138 @@ spring.devtools.restart.enabled=true
 
 需要注意的是，热部署并不能替代完全重启应用程序，并且不能更新所有类型的更改，例如更改配置文件或更改类路径上的类。
 
-# 02.Kaptcha 验证码实现
+# 03.Thymeleaf 模板引擎
+
+**参考：**http://c.biancheng.net/spring_boot/thymeleaf.html
+
+## Thymeleaf 简介
+
+Thymeleaf 是新一代 Java 模板引擎，与 Velocity、FreeMarker 等传统 Java 模板引擎不同，Thymeleaf 支持 HTML 原型，其文件后缀为“.html”，因此它可以直接被浏览器打开，此时浏览器会忽略未定义的 Thymeleaf 标签属性，展示 thymeleaf 模板的静态页面效果；当通过 Web 应用程序访问时，Thymeleaf 会动态地替换掉静态内容，使页面动态显示。
+
+Thymeleaf 通过在 html 标签中，增加额外属性来达到“模板+数据”的展示方式，示例代码如下。
+
+```html
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>Title</title>
+</head>
+<body>
+<!--th:text 为 Thymeleaf 属性，用于在展示文本-->
+<h1 th:text="迎您来到Thymeleaf">欢迎您访问静态页面 HTML</h1>
+</body>
+</html>
+```
+
+## Thymeleaf 语法规则
+
+在使用 Thymeleaf 之前，首先要在页面的 html 标签中声明名称空间，示例代码如下。
+
+```html
+xmlns:th="http://www.thymeleaf.org"
+```
+
+> 在 html 标签中声明此名称空间，可避免编辑器出现 html 验证错误，但这一步并非必须进行的，即使我们不声明该命名空间，也不影响 Thymeleaf 的使用。
+
+Thymeleaf 作为一种模板引擎，它拥有自己的语法规则。Thymeleaf 语法分为以下 2 类：
+
+### 标准表达式语法
+
+1. 获取属性：`${object.property}`，其中 `object` 是从数据模型中获取的对象，`property` 是对象的属性名称。
+2. 方法调用：`${object.method()}`，其中 `method()` 是从对象中调用的方法。
+3. 使用方法参数：`${object.method(arg1, arg2)}`，其中 `arg1` 和 `arg2` 是方法的参数。
+4. 集合操作：`${collection.size()}` 获取集合的大小，`${collection.isEmpty()}` 判断集合是否为空，`${collection.iterator()}` 获取集合的迭代器等。
+5. 数组操作：`${array.length}` 获取数组的长度，`${array[0]}` 获取数组的第一个元素等。
+6. 运算符：支持加、减、乘、除、取余、大于、小于、等于、不等于等运算符，例如 `${num1 + num2}`、`${str1 == str2}` 等。
+7. 内联选择器：`${#ids.size()}` 获取文档中具有 `id` 属性的元素数量，`${#request.getParameter('id')}` 获取 HTTP 请求参数的值等。
+8. 内置对象：Thymeleaf 提供一些内置对象，如 `${#ctx.request.contextPath}` 获取当前请求的上下文路径，`${#locale.language}` 获取当前区域设置的语言等。
+9. 特殊字符：支持使用 `\` 转义特殊字符，如 `${'Hello\'s World!'}` 将显示为 `Hello's World!`。
+
+### th 属性
+
+- th:text：用于设置HTML标签的文本内容
+- th:if：用于条件判断
+- th:switch和th:case：用于实现类似于switch语句的多条件判断
+- th:href：用于设置链接的URL地址
+- th:src：用于设置图像或其他媒体的URL地址
+- th:each：用于迭代集合或数组，并将每个元素应用到一个HTML块中
+- th:object：用于指定用于当前表单的对象
+
+这些th属性可以在HTML标签中使用，以便在模板中使用Thymeleaf的功能和语法。例如：
+
+```html
+<p th:text="${message}">Hello, World!</p>
+```
+
+## Spring Boot整合Thymeleaf
+
+以下是使用Spring Boot和Thymeleaf构建Web应用程序的一些简单步骤：
+
+1. 添加Thymeleaf依赖
+
+在pom.xml中添加以下依赖：
+
+```xml
+<dependency>
+    <groupId>org.springframework.boot</groupId>
+    <artifactId>spring-boot-starter-thymeleaf</artifactId>
+</dependency>
+```
+
+2. 配置Thymeleaf
+
+```yaml
+# 应用名称
+spring:
+  application:
+    name: thymeleaf
+  # 配置模板引擎
+  thymeleaf:
+    encoding: UTF-8
+    mode: HTML
+    prefix: classpath:/templates/
+    suffix: .html
+```
+
+3. 创建Thymeleaf模板
+
+在src/main/resources/templates目录下创建一个名为“index.html”的文件，并添加以下内容：
+
+```html
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>Spring Boot and Thymeleaf</title>
+</head>
+<body>
+    <h1 th:text="${message}"></h1>
+</body>
+</html>
+```
+
+4. 创建控制器
+
+创建一个名为“MainController”的控制器，并添加以下内容：
+
+```java
+@Controller
+public class MainController {
+
+    @GetMapping("/")
+    public String index(Model model) {
+        model.addAttribute("message", "Hello, World!");
+        return "index";
+    }
+}
+```
+
+5. 运行应用程序
+
+运行应用程序并在浏览器中访问 [http://localhost:8080](http://localhost:8080 )，您应该会看到“Hello, World!”在页面上显示。
+
+# 04.Kaptcha 验证码实现
 
 ## Google Kaptcha简介
 
@@ -893,7 +1024,7 @@ public class CaptchaController {
 
 
 
-# 03.Shiro安全框架入门
+# 05.Shiro安全框架入门
 
 > 官网地址：https://shiro.apache.org/
 >
@@ -2119,134 +2250,754 @@ public ShiroDialect shiroDialect() {
 </html>
 ```
 
-# 04.Thymeleaf 模板引擎
+# 06.事务管理
 
-**参考：**http://c.biancheng.net/spring_boot/thymeleaf.html
+Java 事务是在关系型数据库中处理并发操作的重要机制，能够保证数据库中数据的`一致性`和`完整性`。
 
-## Thymeleaf 简介
+## 事务隔离级别
 
-Thymeleaf 是新一代 Java 模板引擎，与 Velocity、FreeMarker 等传统 Java 模板引擎不同，Thymeleaf 支持 HTML 原型，其文件后缀为“.html”，因此它可以直接被浏览器打开，此时浏览器会忽略未定义的 Thymeleaf 标签属性，展示 thymeleaf 模板的静态页面效果；当通过 Web 应用程序访问时，Thymeleaf 会动态地替换掉静态内容，使页面动态显示。
+事务隔离级别是指多个事务之间的隔离程度，主要有以下 4 种隔离级别：
 
-Thymeleaf 通过在 html 标签中，增加额外属性来达到“模板+数据”的展示方式，示例代码如下。
+* **读未提交（Read Uncommitted）**
+  * 最低的隔离级别，一个事务可以读取另一个事务尚未提交的数据。
+  * 这样可能会导致`脏读`（dirty read），即读取到未提交的数据，可能造成数据的不一致。
+* **读已提交（Read Committed）**
+  * 一个事务只能读取另一个事务已经提交的数据。避免了脏读。
+  * 但是可能会造成`不可重复读`（non-repeatable read）的问题，即同一事务中两次读取同一数据，结果不一致。
+* **可重复读（Repeatable Read）**
+  * 在一个事务中多次读取同一数据，其结果是一致的，不保证读取到的数据是最新的。
+  * 并发情况下可能会出现`幻读`（phantom read）的问题，即一个事务读取到了其他事务插入的数据。
+* **串行化（Serializable）**
+  * 最高的隔离级别，保证了事务的串行执行。
+  * 事务串行化可以避免脏读、不可重复读和幻读等问题，但是会影响并发性能。
 
-```html
-<!DOCTYPE html>
-<html lang="en" xmlns:th="http://www.thymeleaf.org">
-<head>
-    <meta charset="UTF-8">
-    <title>Title</title>
-</head>
-<body>
-<!--th:text 为 Thymeleaf 属性，用于在展示文本-->
-<h1 th:text="迎您来到Thymeleaf">欢迎您访问静态页面 HTML</h1>
-</body>
-</html>
-```
+## 事务传播行为
 
-## Thymeleaf 语法规则
+事务传播行为是指一个事务方法调用另一个事务方法时，当前事务如何传播到被调用方法中。
+Spring的事务传播行为有7种，分别是：
 
-在使用 Thymeleaf 之前，首先要在页面的 html 标签中声明名称空间，示例代码如下。
+* **PROPAGATION_REQUIRED**`默认`
+  * 如果当前存在事务，则加入该事务；如果当前没有事务，则创建一个新的事务。
 
-```html
-xmlns:th="http://www.thymeleaf.org"
-```
+* **PROPAGATION_SUPPORTS**
+  * 如果当前存在事务，则加入该事务；如果当前没有事务，则以非事务的方式继续运行。
 
-> 在 html 标签中声明此名称空间，可避免编辑器出现 html 验证错误，但这一步并非必须进行的，即使我们不声明该命名空间，也不影响 Thymeleaf 的使用。
+* **PROPAGATION_MANDATORY**
+  * 如果当前存在事务，则加入该事务；如果当前没有事务，则抛出异常。
 
-Thymeleaf 作为一种模板引擎，它拥有自己的语法规则。Thymeleaf 语法分为以下 2 类：
+* **PROPAGATION_REQUIRES_NEW**
+  * 创建一个新的事务，如果当前存在事务，则把当前事务挂起。
 
-### 标准表达式语法
+* **PROPAGATION_NOT_SUPPORTED**
+  * 以非事务方式运行，如果当前存在事务，则把当前事务挂起。
+* **PROPAGATION_NEVER**
+  * 以非事务方式运行，如果当前存在事务，则抛出异常。
 
-1. 获取属性：`${object.property}`，其中 `object` 是从数据模型中获取的对象，`property` 是对象的属性名称。
-2. 方法调用：`${object.method()}`，其中 `method()` 是从对象中调用的方法。
-3. 使用方法参数：`${object.method(arg1, arg2)}`，其中 `arg1` 和 `arg2` 是方法的参数。
-4. 集合操作：`${collection.size()}` 获取集合的大小，`${collection.isEmpty()}` 判断集合是否为空，`${collection.iterator()}` 获取集合的迭代器等。
-5. 数组操作：`${array.length}` 获取数组的长度，`${array[0]}` 获取数组的第一个元素等。
-6. 运算符：支持加、减、乘、除、取余、大于、小于、等于、不等于等运算符，例如 `${num1 + num2}`、`${str1 == str2}` 等。
-7. 内联选择器：`${#ids.size()}` 获取文档中具有 `id` 属性的元素数量，`${#request.getParameter('id')}` 获取 HTTP 请求参数的值等。
-8. 内置对象：Thymeleaf 提供一些内置对象，如 `${#ctx.request.contextPath}` 获取当前请求的上下文路径，`${#locale.language}` 获取当前区域设置的语言等。
-9. 特殊字符：支持使用 `\` 转义特殊字符，如 `${'Hello\'s World!'}` 将显示为 `Hello's World!`。
+* **PROPAGATION_NESTED**
+  * 如果当前存在事务，则创建一个事务作为当前事务的嵌套事务来运行；
+  * 如果当前没有事务，则该取值等价于TransactionDefinition.PROPAGATION_REQUIRED。
 
-### th 属性
+## 分布式事务
 
-- th:text：用于设置HTML标签的文本内容
-- th:if：用于条件判断
-- th:switch和th:case：用于实现类似于switch语句的多条件判断
-- th:href：用于设置链接的URL地址
-- th:src：用于设置图像或其他媒体的URL地址
-- th:each：用于迭代集合或数组，并将每个元素应用到一个HTML块中
-- th:object：用于指定用于当前表单的对象
+分布式事务是指涉及多个资源（如多个数据库、消息队列等）的事务操作。由于多个资源的操作涉及到网络传输等因素，因此分布式事务的处理较为复杂。通常采用以下两种方式实现分布式事务：
 
-这些th属性可以在HTML标签中使用，以便在模板中使用Thymeleaf的功能和语法。例如：
+### 两阶段提交（Two-Phase Commit）
 
-```html
-<p th:text="${message}">Hello, World!</p>
-```
+两阶段提交是一种基于协调者-参与者模式的分布式事务协议，可以确保所有参与者在提交或回滚时达成一致。在该协议中，有一个`协调者`（Coordinator）协调多个`参与者`（Participant）的提交或回滚。
 
-## Spring Boot整合Thymeleaf
+两阶段提交协议分为两个阶段：
 
-以下是使用Spring Boot和Thymeleaf构建Web应用程序的一些简单步骤：
+* 预提交阶段
+  * 协调者询问所有参与者是否可以提交，参与者回复协调者是否可以提交。
+* 提交阶段
+  * 如果所有参与者都同意提交，则协调者通知所有参与者提交。
+  * 如果有任何一个参与者不能提交，则协调者通知所有参与者回滚。
 
-1. 添加Thymeleaf依赖
+两阶段提交协议可以保证事务的一致性，但是它的性能和可用性较低，因为需要等待所有参与者的响应。
 
-在pom.xml中添加以下依赖：
+### 补偿事务（Compensating Transaction）
 
-```xml
-<dependency>
-    <groupId>org.springframework.boot</groupId>
-    <artifactId>spring-boot-starter-thymeleaf</artifactId>
-</dependency>
-```
+补偿事务是一种基于撤销操作的分布式事务处理方式，即在分布式事务提交后，如果某个操作失败，则通过补偿操作来撤销已经提交的操作，使整个分布式事务回到原始状态。
 
-2. 配置Thymeleaf
+补偿事务可以保证系统的可用性和性能，但是需要针对每个操作编写相应的补偿操作，增加了系统的复杂性。
 
-```yaml
-# 应用名称
-spring:
-  application:
-    name: thymeleaf
-  # 配置模板引擎
-  thymeleaf:
-    encoding: UTF-8
-    mode: HTML
-    prefix: classpath:/templates/
-    suffix: .html
-```
+## 使用 Spring 管理事务
 
-3. 创建Thymeleaf模板
+Spring 是一款流行的 Java 开发框架，提供了完善的事务管理机制。在 Spring 中，事务管理是通过 AOP（面向切面编程）实现的。Spring 事务管理机制的主要组件包括：
 
-在src/main/resources/templates目录下创建一个名为“index.html”的文件，并添加以下内容：
+- **PlatformTransactionManager**：
+  - 事务管理器，管理事务的创建、提交和回滚。
+- **TransactionDefinition**：
+  - 事务定义，定义事务的隔离级别、传播行为和超时时间等。
+- **TransactionStatus**：
+  - 事务状态，表示事务的当前状态，如已提交、已回滚等。
 
-```html
-<!DOCTYPE html>
-<html xmlns:th="http://www.thymeleaf.org">
-<head>
-    <meta charset="UTF-8">
-    <title>Spring Boot and Thymeleaf</title>
-</head>
-<body>
-    <h1 th:text="${message}"></h1>
-</body>
-</html>
-```
+ 使用 Spring 管理事务可以大大简化事务的编写和管理，提高开发效率和系统性能。
 
-4. 创建控制器
+综上所述，Java 事务在实际应用中具有重要作用，不仅能够保证数据的一致性和完整性，还能提高系统的并发性能和可用性。同时，隔离级别、传播行为和分布式事务等进阶应用也需要开发人员掌握。在实际开发中，使用 Spring管理事务时，通常会将 `@Transactional` 注解放在 Service 类的方法上。这样，当方法被调用时，Spring 将会在方法执行之前自动开启一个事务，并在方法执行完毕之后提交或回滚该事务。
 
-创建一个名为“MainController”的控制器，并添加以下内容：
+除了在方法上使用 `@Transactional` 注解外，还可以在类级别上使用该注解，以便将注解应用到该类中的所有方法上。例如：
 
 ```java
-@Controller
-public class MainController {
-
-    @GetMapping("/")
-    public String index(Model model) {
-        model.addAttribute("message", "Hello, World!");
-        return "index";
+@Transactional
+public class MyService {
+    public void method1() {
+        // ...
+    }
+    
+    public void method2() {
+        // ...
     }
 }
 ```
 
-5. 运行应用程序
+在这个例子中，`@Transactional` 注解被放在 `MyService` 类的头部，这意味着该注解将应用到该类中的所有方法上。
 
-运行应用程序并在浏览器中访问 [http://localhost:8080](http://localhost:8080 )，您应该会看到“Hello, World!”在页面上显示。
+此外，`@Transactional` 注解还支持一些参数，以便进一步控制事务的行为，例如：
+
+- `propagation`：指定事务的传播行为，默认值为 `REQUIRED`。
+- `isolation`：指定事务的隔离级别，默认值为 `DEFAULT`。
+- `readOnly`：指定事务是否只读，默认值为 `false`。
+- `timeout`：指定事务的超时时间，默认值为 `-1`（永不超时）。
+- `rollbackFor`：指定应该触发当前事务回滚的异常。{xxx1.class, xxx2.class,……}
+- `noRollbackFor`：指定不应触发当前事务回滚的异常。
+
+
+例如：
+
+```java
+@Transactional(propagation = Propagation.REQUIRED, 
+               isolation = Isolation.READ_COMMITTED, 
+               readOnly = false, 
+               timeout = 30)
+public void myMethod() {
+    // ...
+}
+
+```
+
+在这个例子中，`@Transactional` 注解被用来指定事务的传播行为为 `REQUIRED`，隔离级别为 `READ_COMMITTED`，只读标志为 `false`，超时时间为 `30` 秒。
+
+最后需要注意的是，在使用 Spring 管理事务时，需要确保 Spring 的事务管理器配置正确，并且数据库驱动程序支持事务操作。
+
+##  事务不回滚问题
+
+**示例1：手动抛出检查异常导致事务不回滚**
+
+```java
+throw new SQLException("发生异常了..");
+```
+
+因为`Spring`的默认的事务规则是遇到运行异常`（RuntimeException）`和程序错误`（Error）`才会回滚。如果想针对检查异常进行事务回滚，可以在`@Transactional`注解里使用 `rollbackFor`属性明确指定异常。
+
+**java中异常分类**
+
+* `检查异常`（Checked Exception）：
+
+是编译时异常，在代码中必须显式地进行处理或者在方法声明中抛出。例如 IOException、SQLException 等。
+
+* `运行时异常`（RuntimeException）：
+
+是在运行时可能出现的异常，通常由程序逻辑或者运行环境问题引起，不需要显式地在代码中处理或者抛出。例如 NullPointerException、IllegalArgumentException 等。
+
+* `错误`（Error）：
+
+是指程序运行时出现的错误，通常是由系统或者硬件问题引起，例如 、StackOverflowError 等。与异常不同，错误一般是不可恢复的，程序无法处理，只能让程序终止。
+
+
+
+**示例2：在业务层手工捕捉并处理了异常，你都把异常“吃”掉了，当然不会回滚**
+
+```java
+try{
+    // 谨慎：尽量不要在业务层捕捉异常并处理
+    throw new SQLException("发生异常了..");
+}catch (Exception e){
+    e.printStackTrace();
+}
+```
+
+推荐做法：在业务层统一抛出throw 异常，然后在控制层统一处理。
+
+ 
+
+# 07.全局异常处理
+
+在Java中，全局异常处理方案可以通过以下方式实现：
+
+* 使用`try-catch`块：
+  * 在可能抛出异常的代码块使用try-catch块捕获异常并处理
+  * 这种方式需要手动编写try-catch代码块，存在代码冗余问题
+* `自定义异常类`
+  * 根据业务逻辑定义自己的异常类，继承RuntimeException或Exception
+  * 在代码中按照需求抛出自定义的异常，使用try-catch捕获异常并处理，可以把所有的异常处理都放在一起
+* 使用框架提供的`全局异常处理器`
+  * Spring Boot框架提供了全局异常处理器（`@ControllerAdvice`和`@ExceptionHandler`注解）
+  * 可以统一处理所有抛出的异常
+
+## GlobalExceptionHandler
+
+当使用全局异常处理器来统一处理异常时，通常需要经过以下几个步骤：
+
+1. **定义返回统一实体**
+
+为了让异常统一返回给客户端，需要定义一个统一格式的返回实体类，表示请求、相应时的结果。
+
+```java
+/**
+ * 响应信息主体
+ * 异常码规范：200-成功，400-客户端错误，500-服务端错误
+ *
+ * @param <T>
+ */
+@ToString
+@NoArgsConstructor
+public class R<T> implements Serializable {
+
+    private static final long serialVersionUID = 1L;
+
+    @Getter
+    @Setter
+    private int code;
+
+    @Getter
+    @Setter
+    private String msg;
+
+    @Getter
+    @Setter
+    private T data;
+
+    public static final int SUCCESS_CODE = 200;
+    public static final int FAILED_CODE = 500;
+
+    public static <T> R<T> success() {
+        return restResult(null, SUCCESS_CODE, "success");
+    }
+
+    public static <T> R<T> success(T data) {
+        return restResult(data, SUCCESS_CODE, "success");
+    }
+
+    public static <T> R<T> success(T data, String msg) {
+        return restResult(data, SUCCESS_CODE, msg);
+    }
+
+    public static <T> R<T> failed(String msg) {
+        return restResult(null, FAILED_CODE, msg);
+    }
+
+    public static <T> R<T> failed(int code, String msg) {
+        return restResult(null, code, msg);
+    }
+
+    public static <T> R<T> restResult(T data, int code, String msg) {
+        R<T> apiResult = new R<>();
+        apiResult.setCode(code);
+        apiResult.setData(data);
+        apiResult.setMsg(msg);
+        return apiResult;
+    }
+
+    public static boolean isSucceed(R r) {
+        return r.getCode() == SUCCESS_CODE;
+    }
+
+    public static boolean isFailed(R r) {
+        return r.getCode() != SUCCESS_CODE;
+    }
+
+}
+```
+
+2. **定义应用程序`顶级异常基类`**
+
+在实际应用中，使用 `ApplicationException` 作为顶级异常基类，继承自 `RuntimeException`，我们可以定义一些子类来扩展不同类型的异常，例如 `DataException`、`PermissionException` 等等，分别代表数据异常和权限异常等业务场景。
+
+```java
+/**
+ * 应用程序异常（继承自 RuntimeException）
+ */
+@Data
+@NoArgsConstructor
+@EqualsAndHashCode(callSuper = true)
+public class ApplicationException extends RuntimeException {
+    private static final long serialVersionUID = 1L;
+
+    /**
+     * 异常编码
+     */
+    private Integer code;
+
+    /**
+     * 异常消息
+     */
+    private String message;
+
+    /**
+     * 异常数据
+     */
+    private Object data;
+
+    /**
+     * 异常参数
+     */
+    private Object[] args;
+
+    /**
+     * 构造函数，用于抛出非编码异常，消息已经定义好了
+     *
+     * @param message 异常消息
+     * @param args    异常消息中格式化参数列表
+     */
+    public ApplicationException(String message, Object... args) {
+        super(String.format(message, args));
+        this.args = args;
+    }
+
+    /**
+     * 构造函数，使用特定的异常编码和异常消息来构造 ApplicationException
+     *
+     * @param code    异常编码
+     * @param message 异常消息
+     */
+    public ApplicationException(Integer code, String message) {
+        super(message);
+        this.code = code;
+        this.message = message;
+    }
+
+    /**
+     * 构造函数，使用特定的异常编码、异常消息和异常数据来构造 ApplicationException
+     *
+     * @param code    异常编码
+     * @param message 异常消息
+     * @param data    异常数据
+     */
+    public ApplicationException(Integer code, String message, Object data) {
+        super(message);
+        this.code = code;
+        this.message = message;
+        this.data = data;
+    }
+
+    /**
+     * 构造函数，使用特定的异常编码、异常消息和异常参数来构造 ApplicationException
+     *
+     * @param code    异常编码
+     * @param message 异常消息
+     * @param args    异常参数
+     */
+    public ApplicationException(Integer code, String message, Object[] args) {
+        super(String.format(message, args));
+        this.code = code;
+        this.message = String.format(message, args);
+        this.args = args;
+    }
+
+
+    /**
+     * 构造函数，使用特定的异常编码、异常消息、异常数据和异常参数来构造 ApplicationException
+     *
+     * @param code    异常编码
+     * @param message 异常消息
+     * @param data    异常数据
+     * @param args    异常参数
+     */
+    public ApplicationException(Integer code, String message, Object data, Object[] args) {
+        super(String.format(message, args));
+        this.code = code;
+        this.message = String.format(message, args);
+        this.data = data;
+        this.args = args;
+    }
+
+}
+```
+
+`BusinessException` 继承自 `ApplicationException` 的主要目的是让我们能够根据业务场景定制不同类型的异常。它可以作为 `ApplicationException` 的一种子类，代表种类更加具体的业务异常。
+
+```java
+/**
+ * 业务异常（继承自 ApplicationException）
+ */
+@Data
+@EqualsAndHashCode(callSuper = true)
+public class BusinessException extends ApplicationException {
+    private static final long serialVersionUID = 1L;
+
+
+}
+```
+
+3. **定义`ErrorWrapper`接口**
+
+ErrorWrapper接口定义了一些处理错误的通用方法
+
+```java
+public interface ErrorWrapper {
+
+    /**
+     * 获取个性化的错误消息
+     *
+     * @param args 错误消息参数
+     * @return 个性化的错误消息
+     */
+    String getMessage(Object... args);
+
+    /**
+     * 抛出指定异常
+     *
+     * @param args 异常参数
+     * @return ApplicationException
+     */
+    ApplicationException exception(Object... args);
+
+    /**
+     * 返回标准的失败响应 R
+     *
+     * @return R
+     */
+    R response();
+
+}
+```
+
+4. **定义`异常枚举类`**
+
+* 定义异常枚举`ApplicationErrorCode`并实现`ErrorWrapper`接口
+
+
+```java
+@Getter
+@AllArgsConstructor
+public enum ApplicationErrorCode implements ErrorWrapper {
+
+    INVALID_PARAMETER(10001, "无效的参数"),
+
+    MISSING_PARAMETER(10002, "缺失的参数"),
+
+    FILE_IO_EXCEPTION(10003, "文件读写异常"),
+
+    DATABASE_EXCEPTION(10004, "数据库异常"),
+
+    NETWORK_EXCEPTION(10005, "网络异常"),
+
+    CONNECTION_REFUSED_EXCEPTION(10006, "连接被拒绝"),
+
+    UNAUTHORIZED_EXCEPTION(10007, "未授权"),
+
+    FORBIDDEN_EXCEPTION(10008, "禁止访问"),
+
+    RESOURCE_NOT_FOUND_EXCEPTION(10009, "资源不存在"),
+
+    UNSUPPORTED_MEDIA_TYPE_EXCEPTION(10010, "不支持的媒体类型"),
+
+    SERVICE_UNAVAILABLE_EXCEPTION(10011, "服务不可用"),
+
+    INTERNAL_SERVER_ERROR_EXCEPTION(10012, "服务器内部错误"),
+
+    TIMEOUT_EXCEPTION(10013, "超时异常"),
+
+    DUPLICATE_KEY_EXCEPTION(10014, "唯一键冲突"),
+
+    UNSUPPORTED_OPERATION_EXCEPTION(10015, "不支持的操作"),
+
+    SYSTEM_SERVICE_ERROR(99999, "系统服务错误"),
+
+    ;
+
+
+    /**
+     * 错误码
+     */
+    private final int code;
+
+    /**
+     * 错误信息
+     */
+    private final String message;
+
+    /**
+     * 获取个性化的错误消息
+     *
+     * @param args 错误消息参数
+     * @return 个性化的错误消息
+     */
+    @Override
+    public String getMessage(Object... args) {
+        return String.format(message, args);
+    }
+
+    /**
+     * 抛出指定异常
+     *
+     * @param args 异常参数
+     * @return ApplicationException
+     */
+    @Override
+    public ApplicationException exception(Object... args) {
+        return new ApplicationException(code, message, args);
+    }
+
+    /**
+     * 返回标准的失败响应 R
+     *
+     * @return R
+     */
+    @Override
+    public R response() {
+        return R.failed(code, message);
+    }
+
+}
+```
+
+* 定义异常枚举`BusinessErrorCode`并实现`ErrorWrapper`接口
+
+```java
+@Getter
+@AllArgsConstructor
+public enum BusinessErrorCode implements ErrorWrapper {
+
+    //定义一个登录异常
+    LOGIN_ERROR(20001, "登录失败，用户名 【%s】 的密码错误。"),
+
+    ;
+
+
+    /**
+     * 错误码
+     */
+    private final int code;
+
+    /**
+     * 错误信息
+     */
+    private final String message;
+
+
+    /**
+     * 获取个性化的错误消息
+     *
+     * @param args 错误消息参数
+     * @return 个性化的错误消息
+     */
+    @Override
+    public String getMessage(Object... args) {
+        return String.format(message, args);
+    }
+
+    /**
+     * 抛出指定异常
+     *
+     * @param args 异常参数
+     * @return ApplicationException
+     */
+    @Override
+    public ApplicationException exception(Object... args) {
+        return new ApplicationException(code, message, args);
+    }
+
+    /**
+     * 返回标准的失败响应 R
+     *
+     * @return R
+     */
+    @Override
+    public R response() {
+        return R.failed(code, message);
+    }
+
+}
+```
+
+5. **实现全局异常处理器**
+
+自定义一个全局异常处理器类，使用@RestControllerAdvice进行标记，并在其内部通过@ExceptionHandler注解处理异常。
+
+```java
+/**
+ * 全局异常处理器
+ */
+@Slf4j
+@RestControllerAdvice
+public class GlobalExceptionHandler {
+
+    /**
+     * 处理绑定异常
+     */
+    @ExceptionHandler(BindException.class)
+    @ResponseStatus(HttpStatus.BAD_REQUEST)
+    public R handleBindException(BindException e) {
+        String message = e.getFieldError().getDefaultMessage();
+        return R.failed(message);
+    }
+
+    /**
+     * 处理校验异常
+     */
+    @ExceptionHandler(MethodArgumentNotValidException.class)
+    @ResponseStatus(HttpStatus.BAD_REQUEST)
+    public R handleValidationException(MethodArgumentNotValidException e) {
+        String message = e.getBindingResult().getFieldError().getDefaultMessage();
+        return R.failed(message);
+    }
+
+
+    /**
+     * 捕获自定义异常 ApplicationException
+     */
+    @ResponseStatus(HttpStatus.INTERNAL_SERVER_ERROR)
+    @ExceptionHandler(ApplicationException.class)
+    public R<Void> handleApplicationException(ApplicationException e) {
+        return R.failed(e.getCode(), e.getMessage());
+    }
+
+    /**
+     * 捕获全局异常
+     */
+    @ResponseStatus(HttpStatus.INTERNAL_SERVER_ERROR)
+    @ExceptionHandler(Exception.class)
+    public R<Void> handleException(Exception e) {
+        //可根据需要选择打印日志或发送邮件通知等
+        return R.failed(e.getMessage());
+    }
+}
+```
+
+6. **在Controller中抛出异常**
+
+当发生业务异常时，在Controller中抛出RuntimeException及其子类的实例即可。全局异常处理器会自动拦截，并以统一格式返回给前端。
+
+```java
+@RestController
+public class SysIndexController {
+    /**
+     * 首页方法
+     */
+    @GetMapping("/login")
+    public R<Void> login(@Validated User user) {
+        //模拟用户未登录，抛出业务逻辑异常
+        throw BusinessErrorCode.LOGIN_ERROR.exception(user.getUsername());
+    }
+}
+```
+
+## 后端异常信息国际化
+
+**① 配置 i18n 错误文案**
+
+在resources/i18n下配置`messages_zh_CN.properties`和`messages_en_US.properties`文件
+
+```properties
+LOGIN_ERROR=登录失败，用户名 {0} 的密码错误。
+
+LOGIN_ERROR=Login failed. The password of user name [%s] is incorrect.
+```
+
+**② 国际化配置**
+
+```java
+/**
+ * 国际化配置
+ */
+@Configuration
+public class I18nConfig {
+
+    /**
+     * 系统国际化文件配置
+     * @return MessageSource
+     */
+    @Bean
+    public MessageSource messageSource() {
+        ReloadableResourceBundleMessageSource messageSource = new ReloadableResourceBundleMessageSource();
+        messageSource.setBasename("classpath:i18n/messages");
+        return messageSource;
+    }
+
+}
+```
+
+**③ 使用MsgUtils获取国际化信息**
+
+```java
+MsgUtils.getMessage(i18nCode, args);
+```
+
+**④ 修改异常枚举，使其支持国际化异常**
+
+```java
+@Getter
+@AllArgsConstructor
+public enum BusinessErrorCode implements ErrorWrapper {
+
+    //定义一个登录异常
+    LOGIN_ERROR(20001, "登录失败，用户名 【{0}】 的密码错误。"),
+
+    ;
+
+
+    /**
+     * 错误码
+     */
+    private final int code;
+
+
+    /**
+     * 错误信息
+     */
+    private final String message;
+
+
+    /**
+     * 获取国际化的错误消息
+     * @param args 错误消息参数
+     * @return 个性化的错误消息
+     */
+    @Override
+    public String getMessage(Object... args) {
+        try {
+            return MsgUtils.getMessage(name(), args);
+        } catch (NoSuchMessageException e) {
+            //如果没有找到国际化的错误消息，就使用默认的错误消息
+            return MessageFormat.format(message, args);
+        }
+    }
+
+    /**
+     * 抛出指定异常
+     * @param args 异常参数
+     * @return ApplicationException
+     */
+    @Override
+    public ApplicationException exception(Object... args) {
+        return new ApplicationException(code, getMessage(args));
+    }
+
+    /**
+     * 返回标准的失败响应 R
+     * @return R
+     */
+    @Override
+    public R response() {
+        return R.failed(code, getMessage());
+    }
+
+}
+```
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
