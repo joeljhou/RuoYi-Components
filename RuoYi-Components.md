@@ -2987,6 +2987,382 @@ public enum BusinessErrorCode implements ErrorWrapper {
 }
 ```
 
+# 08.参数验证
+
+在实际的开发中，我们需要对参数的有效性和合法性进行验证，防止恶意攻击和误操作。参数验证是一个非常重要的环节，可以有效地保证系统的安全性和稳定性。
+
+## 原生@Validated校验数据
+
+**添加依赖**
+
+```xml
+<!-- 参数验证 -->
+<dependency>
+    <groupId>org.hibernate.validator</groupId>
+    <artifactId>hibernate-validator</artifactId>
+</dependency>
+```
+
+ **参数验证支持的注解**
+
+| 注解名称                   | 功能                                                         |
+| -------------------------- | ------------------------------------------------------------ |
+| @Null                      | 检查该字段为空                                               |
+| @NotNull                   | 不能为null                                                   |
+| @NotBlank                  | 不能为空，常用于检查空字符串                                 |
+| @NotEmpty                  | 不能为空，多用于检测list是否size是0                          |
+| @Max                       | 该字段的值只能小于或等于该值                                 |
+| @Min                       | 该字段的值只能大于或等于该值                                 |
+| @Past                      | 检查该字段的日期是在过去                                     |
+| @Future                    | 检查该字段的日期是否是属于将来的日期                         |
+| @Digits                    | 检查数字是否符合指定的精度和范围                             |
+| @Email                     | 检查是否是一个有效的email地址                                |
+| @Pattern(regex=,flag=)     | 被注释的元素必须符合指定的正则表达式                         |
+| @Range(min=,max=,message=) | 被注释的元素必须在合适的范围内                               |
+| @Size(min=, max=)          | 检查该字段的size是否在min和max之间，可以是字符串、数组、集合、Map等 |
+| @Length(min=,max=)         | 检查所属的字段的长度是否在min和max之间,只能用于字符串        |
+| @AssertTrue                | 用于boolean字段，该字段只能为true                            |
+| @AssertFalse               | 用于boolean字段，该字段只能为false                           |
+
+**数据校验使用**
+
+在SpringBoot中使用参数验证非常简单，只需要在需要验证参数的实体类中添加相应的注解即可，如下所示：
+
+* `@Null`/`@NotNull`/`@NotBlank`/`@NotEmpty`
+
+```java
+@Data
+public class User {
+    @NotNull(message = "用户名不能为空")
+    @NotBlank(message = "用户名不能为空")
+    private String username;
+
+    @NotNull(message = "密码不能为空")
+    @NotBlank(message = "密码不能为空")
+    private String password;
+
+    @NotNull(message = "头像不能为空")
+    @NotEmpty(message = "头像不能为空")
+    private byte[] avatar;
+}
+```
+
+* `@Max`/`@Min`
+
+```java
+@Data
+public class User {
+    @Min(value = 18, message = "年龄不能小于{value}")
+    @Max(value = 100, message = "年龄不能大于{value}")
+    private Integer age;
+}
+```
+
+* `@Past`/`@Future`
+
+```java
+@Data
+public class User {
+
+    @Past(message = "生日必须是一个过去的时间")
+    private Date birthday;
+
+    @Future(message = "到期日必须是一个将来的时间")
+    private Date expiry;
+
+}
+```
+
+* `@Digits`
+
+```java
+@Data
+public class User {
+    @Digits(integer = 3, fraction = 2, message = "工资格式不正确")
+    private BigDecimal salary;
+}
+```
+
+* `@Email`
+
+```java
+@Data
+public class User {
+    @Email(message = "请输入正确的邮箱")
+    private String email;
+}
+```
+
+* `@Pattern`
+
+```java
+@Data
+public class User {
+    @Pattern(regexp = "^(?=.*[a-z])(?=.*[A-Z])(?=.*\\d)[a-zA-Z\\d]{8,}$", message = "请填写符合规范的密码")
+    private String password;
+}
+```
+
+* `@Range`
+
+```java
+@Data
+public class User {
+    @Range(min = 50, max = 200, message = "请输入合法的身高")
+    private Integer height;
+}
+```
+
+* `@Size`
+
+```java
+@Data
+public class User {
+    @Size(min = 6, max = 20, message = "用户名长度必须在{min}-{max}之间")
+    private String username;
+}
+```
+
+* `@Length`
+
+```java
+@Data
+public class User {
+    @Length(min = 6, max = 20, message = "用户名长度必须在{min}-{max}之间")
+    private String username;
+}
+```
+
+* `@AssertTrue`/`@AssertFalse`
+
+```java
+@Data
+public class User {
+    @AssertTrue(message = "已满18周岁")
+    private boolean adult;
+
+    @AssertFalse(message = "不能是管理员")
+    private boolean isAdmin;
+}
+```
+
+## 自定义注解校验
+
+使用原生的`@Validated`进行参数校验时，都是特定的注解去校验（例如字段长度、大小、不为空等），我们也可以用自定义的注解去进行参数校验，进行自定义预处理。
+
+**自定义校验注解**
+
+我们可以自定义参数校验注解来扩展SpringBoot的默认参数校验注解。
+
+比如，我们要校验用户输入的日期是否为本月的工作日，可以自定义注解`@Workday`。
+
+首先，我们定义一个实现了`ConstraintValidator`接口的类，该类实现了自定义注解的具体校验逻辑。该类必须实现以下两个方法：
+
+* `initialize()`：在该方法中可以使用注解中的属性对校验器进行初始化。
+
+* `isValid()`：在该方法中实现校验逻辑，返回true表示校验通过，返回false表示校验失败。
+
+```java
+// 自定义校验器
+public class WorkdayValidator implements ConstraintValidator<Workday, LocalDate> {
+
+    @Override
+    public void initialize(Workday constraintAnnotation) {}
+
+    @Override
+    public boolean isValid(LocalDate value, ConstraintValidatorContext context) {
+        // 判断是否为工作日
+        ...
+    }
+}
+
+```
+
+然后，我们定义一个自定义注解`@Workday`，用于标记需要校验的参数。在自定义注解中，我们可以定义需要校验的属性的名称、默认校验消息等。
+
+```java
+@Target({ElementType.FIELD})
+@Retention(RetentionPolicy.RUNTIME)
+@Constraint(validatedBy = {WorkdayValidator.class})
+public @interface Workday {
+
+    String message() default "Must be a workday";
+
+    Class<?>[] groups() default {};
+
+    Class<? extends Payload>[] payload() default {};
+}
+
+```
+
+在该注解中，我们使用了`@Constraint`注解，该注解表示该注解需要使用自定义的校验器进行校验。
+
+然后在需要进行校验的参数上使用@Workday注解即可。
+
+```java
+@Data
+public class ExampleDto {
+    @Workday
+    private LocalDate date;
+}
+```
+
+**自定义校验器的组合**
+
+有时候我们需要使用多个校验规则进行校验，这时候可以使用Spring的多个校验注解进行组合。
+
+例如，我们需要校验用户名在3到10个字符之间，并且不能包含特殊字符，可以使用如下注解组合：
+
+```java
+@Size(min=3, max=10, message="用户名长度必须为3到10个字符")
+@Pattern(regexp="[a-zA-Z0-9]*", message="用户名只能使用字母和数字")
+```
+
+同时，我们可以自定义一个注解，该注解包含了多个校验规则。使用时只需要标记需要校验的参数即可。例如：
+
+```java
+@Target({ElementType.FIELD})
+@Retention(RetentionPolicy.RUNTIME)
+@Constraint(validatedBy = {})
+@Size(min = 3, max = 10, message = "用户名长度必须为3到10个字符")
+@Pattern(regexp = "[a-zA-Z0-9]*", message = "用户名只能使用字母和数字")
+public @interface UserName {
+
+    String message() default "Invalid user name";
+
+    Class<?>[] groups() default {};
+
+    Class<? extends Payload>[] payload() default {};
+}
+```
+
+然后在需要进行校验的参数上使用@UserName注解即可。
+
+```java
+public class ExampleDto {
+
+    @UserName
+    private String userName;
+
+    // getter and setter
+}
+```
+
+最后在使用@Validated校验参数时，Spring会自动使用该注解中标记的多个校验规则进行校验。我们只需要在参数上添加@Validated注解即可。
+
+## 自定义参数预处理器
+
+有时候我们需要在校验之前对参数进行一些自定义的预处理，例如，需要对参数进行去空格、需要对参数进行特殊字符过滤等。可以使用Spring的自定义参数预处理器实现该功能。
+
+首先，创建MyRequest类，用来封装请求参数
+
+```java
+public class MyRequest {
+    private String name;
+    private int age;
+    // 省略getter/setter方法
+}
+```
+
+然后，定义一个实现了`HandlerMethodArgumentResolver`接口的参数处理器类。在该类中实现预处理逻辑，在最后返回处理后的参数即可。
+
+```java
+public class CustomArgumentResolver implements HandlerMethodArgumentResolver {
+
+    // 判断是否需要处理该参数...
+    @Override
+    public boolean supportsParameter(MethodParameter parameter) { 
+        return parameter.getParameterType().equals(MyRequest.class);
+    }
+
+    // 进行参数预处理...
+    @Override
+    public Object resolveArgument(MethodParameter parameter, ModelAndViewContainer mavContainer, NativeWebRequest webRequest, WebDataBinderFactory binderFactory) throws Exception {
+        // 创建MyRequest对象
+        MyRequest request = new MyRequest();
+        // 获取请求参数name
+        String name = webRequest.getParameter("name");
+        if (StringUtils.isNotEmpty(name)) {
+            // 对请求参数进行解密等处理
+            name = decrypt(name);
+            // 对MyRequest对象赋值
+            request.setName(name);
+        }
+        
+        // 获取请求参数age
+        String age = webRequest.getParameter("age");
+        if (StringUtils.isNotEmpty(age)) {
+            // 将请求参数转换为int类型
+            request.setAge(Integer.parseInt(age));
+        }
+        return request;
+    }
+    
+    private String decrypt(String input) {
+        // 解密方法
+        return input;
+    }
+}
+```
+
+然后在配置类中添加自定义参数预处理器：
+
+```java
+@Configuration
+public class WebMvcConfig implements WebMvcConfigurer {
+
+     // 添加自定义参数预处理器
+    @Override
+    public void addArgumentResolvers(List<HandlerMethodArgumentResolver> resolvers) {
+        resolvers.add(new CustomArgumentResolver());
+    }
+}
+```
+
+最后，在控制器中使用该参数即可：
+
+```java
+@RestController
+public class MyController {
+
+    @GetMapping("/myUrl")
+    public String handleRequest(MyRequest request) {
+        // 处理请求参数
+        String name = request.getName();
+        int age = request.getAge();
+        // ...
+        return "name: " + name +", age: " + age;
+    }
+}
+```
+
+在处理该请求时，Spring会自动调用我们实现的参数预处理器。
+
+```json
+GET /myUrl?name=abc&age=25
+```
+
+请求参数会被MyArgumentResolver预处理器所处理：
+
+- name参数首先经过解密处理，然后赋值给MyRequest对象的name属性；
+- age参数被转换成int类型，然后赋值给MyRequest对象的age属性。
+
+最终，在Controller方法中可以直接使用MyRequest对象，而不用再处理请求参数。
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
