@@ -3349,27 +3349,64 @@ GET /myUrl?name=abc&age=25
 
 最终，在Controller方法中可以直接使用MyRequest对象，而不用再处理请求参数。
 
+## 自定义分组校验
 
+有时候我们为了在使用实体类的情况下更好的区分出新增、修改和其他操作验证的不同，可以通过`groups`属性设置。使用方式如下
 
+**使用空接口定义分组**
 
+```java
+public interface Add{}
 
+public interface Edit{}
 
+public interface Delete{}
+```
 
+这种定义方式比较简单，所有的接口都是空接口，而不包含任何方法或属性。这样，在使用注解时，只需要指定需要进行校验的分组即可。
 
+**使用接口内部类定义分组，统一管理**
 
+```java
+/**
+ * 操作类型
+ */
+public interface Type {
+    interface Add {}
+    interface Edit {}
+    interface Delete {}
+}
+```
 
+这种定义方式将所有的分组都包含在一个接口内，使用起来比较方便。同时，这种定义方式也可以将一些相关的注解放在一起定义，方便代码的管理。
 
+**实体使用注解**
 
+```java
+public class MyEntity {
+    @NotBlank(groups = {Type.Add.class})
+    private String name;
+    
+    @NotNull(groups = {Type.Edit.class, Type.Delete.class})
+    private Long id;
+}
+```
 
+**接口定义使用注解**
 
+```java
+// 新增
+public R addSave(@Validated(Add.class) @RequestBody MyEntity entity){
+    return R.success(xxxx);
+}
 
+// 编辑
+public R editSave(@Validated(Edit.class) @RequestBody MyEntity entity){
+    return R.success(xxxx);
+}
+```
 
-
-
-
-
-
-
+Type 定义了Add、Update 和 Delete三个分组，而MyEntity类中的name属性只在Add分组中进行校验，而id属性在Update和Delete分组中进行校验。这样可以使代码结构更加清晰，易于维护。
 
 
 
