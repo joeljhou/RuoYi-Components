@@ -3408,6 +3408,292 @@ public R editSave(@Validated(Edit.class) @RequestBody MyEntity entity){
 
 Type 定义了Add、Update 和 Delete三个分组，而MyEntity类中的name属性只在Add分组中进行校验，而id属性在Update和Delete分组中进行校验。这样可以使代码结构更加清晰，易于维护。
 
+# 09.日志框架
+
+> **Log4j**，**Logback**，**Log4j2**的关系与对比：
+
+* 开发的先后顺序：
+  * `Log4j`是最早的一个Java日志框架
+  * 后来作者  **Ceki Gülcü** 在`Log4j`的基础上创建了`LogBack`
+  * 再后来Log4j的Apache软件基金会开发团队创立了`Log4j 2`，它们都是Java领域常用的日志框架。
+
+* 社区活跃度：
+  * 在社区活跃度方面，Log4j和LogBack的贡献者和用户数量都比较多
+  * 但Log4j由于版本漏洞等问题，已经不再得到项目的主要维护
+  * Log4j 2则是目前最新且被广泛采用的Java日志框架之一。
+* 性能对比：
+  * 在性能方面，Log4j 2通常被认为是最快的Java日志框架，它在大多数情况下比Log4j和LogBack都有更快的日志写入速度和更少的内存占用。
+  * LogBack的性能也非常不错，其测试结果的吞吐量和Log4j 2相当。
+  * Log4j在此方面表现也不错，但由于已经不再得到主要维护，因此我们建议使用Log4j 2或LogBack。
+* SpringBoot默认推荐使用哪个日志框架：
+  * SpringBoot在默认情况下推荐使用Logback做为日志框架，同时也支持使用其他常用的日志框架
+  * 大多数情况下，LogBack是一个很不错的选择，其表现不输于其他框架，且易于配置和使用。
+
+## JDK自带的java.util.logging
+
+**一、Java Util Logging的基本概念**
+
+**概述：**Java Util Logging是Java中自带的一个日志框架，可以方便地进行日志记录。
+
+**日志级别：**
+
+* `SEVERE（最高级别）`: 用于指出严重的错误情况，通常表示系统出现了问题无法继续运行，需要立即解决。
+* `WARNING`：表示出现潜在的问题，但是系统仍然可以正常运行，需要开发人员注意并继续监控。
+* `INFO`：表示普通的信息，如启动成功、请求成功等。
+* `CONFIG`：表示系统的配置信息，如数据库连接信息、服务器配置等。
+* `FINE`：更加详细的信息，通常用于调试时使用。
+* `FINER：`非常详细的信息，用于分析问题时使用。
+* `FINEST（最详细）`：最详细的信息，通常会输出所有相关的信息，用于问题分析和代码调试。
+
+默认情况下，输出级别为INFO，即输出INFO级别及以上的日志信息。如果需要输出更详细的日志信息，可以通过调整输出级别来实现。
+
+**组件：**
+
+Java Util Logging的组成部分包括`LogManager`、`Logger`、`Handler`、`Formatter`等。
+
+其中，`LogManager`是负责配置Logger、Handler、Formatter的管理器；
+
+`Logger`是接收日志记录请求的主体，负责将日志记录请求传递给Handler进行处理；
+
+`Handler`是负责输出日志记录结果的处理器；
+
+`Formatter`是负责将日志记录信息格式化的对象。
+
+
+
+**二、Java Util Logging的使用步骤**
+
+1. 创建Logger对象
+
+Logger是Java Util Logging的核心对象，负责记录日志信息。创建Logger对象的方法如下：
+
+```java
+Logger logger = Logger.getLogger(Tests.class.getName());
+```
+
+其中，loggerName是自定义的Logger名称，可以根据需要进行命名。Logger名称通常与类名相同，以便于管理。
+
+2. 设置Logger的日志级别
+
+Logger有自己的默认日志级别，如果需要将级别调整为其他级别，可以使用以下方法设置：
+
+```java
+logger.setLevel(Level.INFO);
+```
+
+其中，level是需要设置的日志级别，可以为SEVERE、WARNING、INFO、CONFIG、FINE、FINER、FINEST。
+
+3. 添加Handler
+
+Logger负责接收日志记录请求，但并不处理这些请求。处理日志记录请求的是Logger所绑定的Handler。Logger可以绑定多个Handler对象，每个Handler对象扮演不同的角色，处理不同的日志输出方式。
+
+Handler有多种类型，常见的有`ConsoleHandler`、`FileHandler`、`SocketHandler`等。添加Handler的方法如下：
+
+```java
+logger.addHandler(new FileHandler("/path/to/file.log"));
+```
+
+4. 设置Formatter
+
+Formatter负责将日志记录过程中的数据元素格式化为文本输出。Logger可以绑定多个Formatter对象，每个Formatter对象可以为不同的Handler对象提供不同的输出格式。添加Formatter的方法如下：
+
+```java
+// 使用字符串格式输出日志
+handler.setFormatter(new SimpleFormatter());
+```
+
+5. 记录日志信息
+
+经过以上步骤的配置，Logger对象已经可以接收日志记录请求并将其传递给Handler处理。日志记录的方法如下：
+
+```java
+logger.log(Level.INFO, "这是一条普通的信息");
+```
+
+7. 关闭Logger对象
+
+当Logger对象不再被使用时，可以使用以下方法将其关闭：
+
+```java
+logger.close();
+```
+
+
+
+**三、完整的Java Util Logging代码示例如下**
+
+```java
+import java.util.logging.FileHandler;
+import java.util.logging.Handler;
+import java.util.logging.Level;
+import java.util.logging.Logger;
+
+//1. 创建Logger对象
+Logger logger = Logger.getLogger(JulApplicationTests.class.getName());
+
+//2. 将Logger Level（记录器级别）设置默认的INFO
+logger.setLevel(Level.INFO);
+
+//3. 添加文件处理程序
+String filePath = System.getProperty("os.name").toLowerCase().contains("win") ? "D:\\path\\to\\file.log" : "/path/to/file.log";
+FileHandler fileHandler = new FileHandler(filePath);
+logger.addHandler(fileHandler);
+
+//4. 设置格式化程序
+fileHandler.setFormatter(new CustomFormatter());  // 使用自定义格式输出日志
+
+//5. 日志消息（级别由高到低）
+logger.log(Level.SEVERE, "这是一个【严重】的信息");
+logger.log(Level.WARNING, "这是一个【警告】的信息");
+logger.log(Level.INFO, "这是一个【信息】的信息");
+logger.log(Level.CONFIG, "这是一个【配置】的信息");
+logger.log(Level.FINE, "这是一个【良好】的信息");
+logger.log(Level.FINER, "这是一个【更好】的信息");
+logger.log(Level.FINEST, "这是一个【最好】的信息");
+logger.log(Level.ALL, "这是一个【所有】的信息");
+
+//6. 关闭记录器，逐一关闭Logger对象的所有Handler，以释放资源
+for (Handler handler : logger.getHandlers()) {
+    handler.close();
+}
+```
+
+**自定义格式输出日志**
+
+```java
+public class CustomFormatter extends Formatter {
+    private static final String LINE_SEPARATOR = System.getProperty("line.separator");
+    private static final String DATE_PATTERN = "yyyy-MM-dd HH:mm:ss.SSS";
+    private static final SimpleDateFormat DATE_FORMAT = new SimpleDateFormat(DATE_PATTERN);
+
+    @Override
+    public String format(LogRecord record) {
+        StringBuffer sb = new StringBuffer();
+        // 时间戳
+        sb.append(DATE_FORMAT.format(new Date(record.getMillis())));
+        // 日志级别
+        String level = record.getLevel().getName();
+        sb.append(String.format("%10s", level));
+        // 进程ID（PID）
+        String pid = ManagementFactory.getRuntimeMXBean().getName().split("@")[0];
+        sb.append(String.format("%8s", pid)).append(" --- ");
+        // 线程名
+        sb.append("[           ").append(record.getThreadID()).append("] ");
+        // 日志源
+        sb.append(record.getSourceClassName()).append(".").append(record.getSourceMethodName());
+        // 日志消息
+        sb.append("     : ").append(record.getMessage());
+        // 异常信息
+        Throwable throwable = record.getThrown();
+        if (throwable != null) {
+            sb.append(LINE_SEPARATOR)
+                    .append(throwable.toString()).append(LINE_SEPARATOR);
+            StackTraceElement[] stackTrace = throwable.getStackTrace();
+            for (StackTraceElement stackTraceElement : stackTrace) {
+                sb.append("\tat ")
+                        .append(stackTraceElement.getClassName()).append(".")
+                        .append(stackTraceElement.getMethodName()).append("(")
+                        .append(stackTraceElement.getFileName()).append(":")
+                        .append(stackTraceElement.getLineNumber()).append(")").append(LINE_SEPARATOR);
+            }
+        }
+        sb.append(LINE_SEPARATOR);
+        return sb.toString();
+    }
+}
+```
+
+## 日志门面SLF4J
+
+Java 推荐的日志门面是 `SLF4J`（Simple Logging Facade for Java）。
+
+`SLF4J` 本身是一个只提供接口的日志门面，它不提供任何 log 实现。在使用 `SLF4J` 时，需要添加具体的**日志框架的适配器依赖**，使得 SLF4J 可以与具体的日志实现结合使用。常见的日志实现包括 `Logback`、`Log4j2`、`Java Logging` 等。
+
+希望使用 SLF4J 充当 `java Logging` 的门面，在项目中需要添加以下依赖：
+
+1. `slf4j-api`：这是 SLF4J 的核心库，包含了日志门面的 API。
+
+```xml
+<dependency>
+    <groupId>org.slf4j</groupId>
+    <artifactId>slf4j-api</artifactId>
+</dependency>
+```
+
+2. `jul-to-slf4j`：这是 SLF4J 提供的适配器，用于将 `java.util.logging` 的日志消息转发给 SLF4J。
+
+```xml
+<dependency>
+    <groupId>org.slf4j</groupId>
+    <artifactId>jul-to-slf4j</artifactId>
+</dependency>
+```
+
+**SLF4J日志级别：**
+
+* `FATAL（最高级别）`：严重错误信息，发生了严重的问题，系统无法继续运行下去，必须要立即停止。
+* `ERROR`：错误信息，系统运行发生错误或异常，一些需要开发人员特别关注的问题。
+* `WARN`：警告信息，意味着可能出现问题（例如，不期望的状态或者不正确的参数等等），但系统仍然可以正常工作。
+* `INFO`：普通的信息，一些不太重要的信息，不会影响系统的运行，只是提供一些参考。
+* `DEBUG`：调试信息，比较详细的日志信息，用于调试过程中打印一些关键信息，一般不建议在生产环境中使用。
+* `TRACE（最详细）`：跟踪信息，最详细的日志信息，一般来说这个日志级别在开发环境下使用。
+
+**使用SLF4J日志门面代码示例**
+
+```java
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+Logger logger = LoggerFactory.getLogger(SlF4JApplicationTests.class);
+
+logger.error("这是一条【错误】的信息");
+logger.warn("这是一条【警告】的信息");
+logger.info("这是一条【普通】的信息");
+logger.debug("这是一条【调试】的信息");
+logger.trace("这是一条【追踪】的信息");
+```
+
+## Lombok简化代码
+
+使用 `@Slf4j` 注解之前，需要在项目中添加 lombok 依赖
+
+```xml
+<dependency>
+    <groupId>org.projectlombok</groupId>
+    <artifactId>lombok</artifactId>
+    <version>1.18.16</version>
+</dependency>
+```
+
+Lombok `@Slf4j` 注解可以自动为Java类生成日志记录器，可以将常规的日志记录器定义简化为一行代码，如下所示：
+
+```java
+import lombok.extern.slf4j.Slf4j;
+
+@Slf4j
+public class MyClass {
+
+    public void doSomething() {
+        log.info("Doing something");
+    }
+
+}
+```
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
