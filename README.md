@@ -3680,7 +3680,7 @@ public class MyClass {
 }
 ```
 
-## Log4j日志框架
+## Log4j2 日志框架
 
 **一、Spring Boot集成**
 
@@ -3729,7 +3729,7 @@ logging.file=logs/app.log
 
 这里指定了根日志级别为info，表示只记录info及以上级别的日志。日志文件将保存在logs/app.log文件中。
 
-4. 在Spring Boot应用程序中使用日志，可以使用注解注入Logger对象，例如：
+4. 在Spring Boot应用程序中使用日志，例如：
 
 ```java
 import org.slf4j.Logger;
@@ -3930,17 +3930,87 @@ Log4j2 还支持过滤器，可以过滤掉某些不需要的日志消息。例�
 
 总结起来，Log4j2 是一个非常强大、灵活的日志框架，能够帮助我们轻松地进行日志管理和记录，提高应用程序的可靠性和稳定性。配置好 Log4j2 需要谨慎设计，并考虑应用程序的实际需求和场景。
 
+## Logback 日志框架
 
+**一、Spring Boot集成**
 
+1. 添加依赖：在Maven或Gradle中添加Log4j2的依赖。
 
+```xml
+<!-- logback日志 -->
+<dependency>
+    <groupId>ch.qos.logback</groupId>
+    <artifactId>logback-classic</artifactId>
+</dependency>
+```
 
+2. 在`src/main/resources`目录下创建`logback.xml`配置文件。
 
+在Spring Boot应用程序中，可以使用`logback-spring.xml`或`logback.xml`文件作为Logback配置文件。这两个文件都会被Logback自动加载。
 
+```xml
+<configuration>
 
+    <!-- 日志的输出级别：INFO、WARN、DEBUG、ERROR、TRACE、ALL、OFF，默认为DEBUG -->
+    <statusListener class="ch.qos.logback.core.status.OnConsoleStatusListener" />
 
+    <!-- 定义日志输出的格式 -->
+    <property name="LOG_PATTERN" value="%d{yyyy-MM-dd HH:mm:ss.SSS} [%thread] %-5level %logger{50} - %msg%n" />
 
+    <!-- 日志输出到控制台 -->
+    <appender name="CONSOLE" class="ch.qos.logback.core.ConsoleAppender">
+        <encoder>
+            <pattern>${LOG_PATTERN}</pattern>
+            <charset>utf8</charset>
+        </encoder>
+    </appender>
 
+    <!-- 日志输出到文件 -->
+    <appender name="FILE" class="ch.qos.logback.core.rolling.RollingFileAppender">
+        <rollingPolicy class="ch.qos.logback.core.rolling.SizeAndTimeBasedRollingPolicy">
+            <!-- 日志存放的路径 -->
+            <fileNamePattern>/var/log/myservice/myservice.%d{yyyy-MM-dd}.%i.log</fileNamePattern>
+            <maxFileSize>5MB</maxFileSize>
+            <maxHistory>7</maxHistory>
+            <totalSizeCap>100GB</totalSizeCap>
+        </rollingPolicy>
+        <encoder>
+            <pattern>${LOG_PATTERN}</pattern>
+            <charset>utf8</charset>
+        </encoder>
+    </appender>
 
+    <!-- 根据包名定义日志输出级别 -->
+    <logger name="com.foo" level="INFO" additivity="false">
+        <appender-ref ref="FILE" />
+    </logger>
 
+    <root level="INFO">
+        <appender-ref ref="CONSOLE" />
+    </root>
+</configuration>
 
+```
+
+这里我们定义了一个文件的输出路径和文件名，然后配置了一个控制台输出和一个文件输出的Appender，最后配置了日志记录器的级别和输出Appender。
+
+3. 在Spring Boot应用程序中使用日志，例如：
+
+```java
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+@RestController
+public class MyController {
+
+    private static final Logger logger = LoggerFactory.getLogger(MyController.class);
+
+    @GetMapping("/hello")
+    public String hello() {
+        logger.info("hello world!");
+        return "hello";
+    }
+
+}
+```
 
