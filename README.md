@@ -3680,11 +3680,255 @@ public class MyClass {
 }
 ```
 
+## Log4j日志框架
 
+**一、Spring Boot集成**
 
+1.  添加依赖：在Maven或Gradle中添加Log4j2的依赖。
 
+```xml
+<!-- log4j2日志框架 -->
+<dependency>
+  <groupId>org.springframework.boot</groupId>
+  <artifactId>spring-boot-starter-log4j2</artifactId>
+</dependency>
+```
 
+2. 在`src/main/resources`目录下创建`log4j2.xml`配置文件。
 
+```xml
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- Configuration for logging -->
+<Configuration status="info">
+    <Appenders>
+        <!-- Console appender -->
+        <Console name="Console" target="SYSTEM_OUT">
+            <PatternLayout pattern="%d %p %c{1.} [%t] %m%n"/>
+        </Console>
+        <!-- File appender -->
+        <File name="File" fileName="logs/app.log">
+            <PatternLayout pattern="%d %p %c{1.} [%t] %m%n"/>
+        </File>
+    </Appenders>
+    <Loggers>
+        <!-- Root logger -->
+        <Root level="info">
+            <AppenderRef ref="Console"/>
+            <AppenderRef ref="File"/>
+        </Root>
+    </Loggers>
+</Configuration>
+```
+
+3. 在`application.properties`文件中指定日志级别和日志文件路径。
+
+```properties
+logging.level.root=info
+logging.file=logs/app.log
+```
+
+这里指定了根日志级别为info，表示只记录info及以上级别的日志。日志文件将保存在logs/app.log文件中。
+
+4. 在Spring Boot应用程序中使用日志，可以使用注解注入Logger对象，例如：
+
+```java
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+@RestController
+public class MyController {
+
+    private static final Logger logger = LoggerFactory.getLogger(MyController.class);
+
+    @GetMapping("/hello")
+    public String hello() {
+        logger.info("hello world!");
+        return "hello";
+    }
+
+}
+```
+
+**二、log4j2.xml 配置文件详解**
+
+`log4j2`是一个常用的Java日志框架，可以帮助企业记录和管理系统运行时的日志信息。对于企业级应用程序而言，配置`log4j2.xml`文件非常重要，因为它可以控制日志的输出和存储方式。
+
+1. 简单的配置
+
+```xml
+<?xml version="1.0" encoding="UTF-8"?>
+<Configuration status="INFO">
+  <Appenders>
+    <Console name="STDOUT" target="SYSTEM_OUT">
+      <PatternLayout pattern="%d{yyyy-MM-dd HH:mm:ss.SSS} [%t] %-5level %logger{36} - %msg%n"/>
+    </Console>
+  </Appenders>
+  <Loggers>
+    <Root level="error">
+      <AppenderRef ref="STDOUT"/>
+    </Root>
+  </Loggers>
+</Configuration>
+```
+
+这个配置可以很好的在控制台输出日志，但对于企业级应用程序来说还存在很多问题。
+
+2. 分离日志文件
+
+单纯的将日志输出到控制台并不够，因为大多数企业级应用通常需要将日志记录到一个或多个文件中，以方便后续的查询和分析。
+
+```xml
+<?xml version="1.0" encoding="UTF-8"?>
+<Configuration status="INFO">
+  <Appenders>
+  
+    <!-- Console Appender -->
+    <Console name="Console" target="SYSTEM_OUT">
+      <PatternLayout pattern="%d{yyyy-MM-dd HH:mm:ss.SSS} [%t] %-5level %logger{36} - %msg%n"/>
+    </Console>
+
+    <!-- File Appender -->
+    <RollingFile name="File" fileName="logs/app.log"
+            filePattern="logs/$${date:yyyy-MM}/app-%d{MM-dd-yyyy}-%i.log.gz">
+        <PatternLayout pattern="%d{yyyy-MM-dd HH:mm:ss.SSS} [%t] %-5level %logger{36} - %msg%n"/>
+        <Policies>
+            <TimeBasedTriggeringPolicy/>
+            <SizeBasedTriggeringPolicy size="250 MB"/>
+        </Policies>
+        <DefaultRolloverStrategy max="3"/>
+    </RollingFile>
+    
+  </Appenders>
+  <Loggers>
+    <Root level="error">
+      <AppenderRef ref="Console"/>
+      <AppenderRef ref="File"/>
+    </Root>
+  </Loggers>
+</Configuration>
+```
+
+这个配置将日志输出到控制台和一个名为logs/app.log的文件中，并根据时间和文件大小进行日志滚动（最多保留最近的3个日志文件）。
+
+* `<RollingFile>`：定义一个滚动文件输出器，用于将日志写入文件中
+  * `name`：定义输出器的名称为 "File"
+  * `fileName`：定义输出的日志文件名为 "logs/app.log"，即将日志写入到该文件中
+  * `filePattern`：定义了滚动文件的文件名模式，其中 $${date:yyyy-MM} 表示以年月格式对文件进行归档，%d{MM-dd-yyyy} 表示在文件名中添加日期和时间信息，%i 表示添加滚动索引，.log.gz 表示使用 Gzip 压缩文件。
+
+* `<PatternLayout>`：定义输出的日志信息格式
+  * `pattern`：定义输出日志信息的格式，包括日期、线程名、日志级别、类名、日志消息等信息。
+
+* `<Policies>`：定义日志滚动的策略
+* `<TimeBasedTriggeringPolicy>`：定义了基于时间的滚动策略，即按照一定的时间间隔对日志文件进行归档。
+* `<SizeBasedTriggeringPolicy>`：定义了基于文件大小的滚动策略，即当日志文件大小达到 250 MB 时进行归档。
+* `<DefaultRolloverStrategy>`：定义了默认的滚动策略，即最多保留 3 个归档文件，新的日志文件会覆盖最早的日志文件。
+
+3. 动态配置
+
+当应用程序规模变得很大时，日志配置可能需要根据运行时环境进行调整。例如，在测试环境中，需要记录更多的数据以便于调试，而在生产环境中则需要减少日志记录以节省磁盘空间和提高性能。
+
+对于这种情况，可以使用Log4j2的动态配置功能。在log4j2.xml中添加以下代码：
+
+```xml
+<?xml version="1.0" encoding="UTF-8"?>
+<Configuration status="INFO">
+  <Appenders>
+    <!-- Console Appender -->
+    <Console name="Console" target="SYSTEM_OUT">
+      <PatternLayout pattern="%d{yyyy-MM-dd HH:mm:ss.SSS} [%t] %-5level %logger{36} - %msg%n"/>
+    </Console>
+
+    <!-- File Appender -->
+    <RollingFile name="File" fileName="logs/app.log"
+            filePattern="logs/$${date:yyyy-MM}/app-%d{MM-dd-yyyy}-%i.log.gz">
+        <PatternLayout pattern="%d{yyyy-MM-dd HH:mm:ss.SSS} [%t] %-5level %logger{36} - %msg%n"/>
+        <Policies>
+            <TimeBasedTriggeringPolicy/>
+            <SizeBasedTriggeringPolicy size="250 MB"/>
+        </Policies>
+        <DefaultRolloverStrategy max="3"/>
+    </RollingFile>
+  </Appenders>
+  <Loggers>
+    <!-- Root Logger -->
+    <Root level="error">
+      <AppenderRef ref="Console"/>
+
+      <!-- Reference to the LoggerContext -->
+      <Script fileName="dynamic-log-level.js" language="javascript"/>
+      <ScriptRef ref="dynamic-log-level"/>
+    </Root>
+  </Loggers>
+</Configuration>
+```
+
+这个配置中，我们添加了一个`Script`元素引用了名为“`dynamic-log-level.js`”的脚本文件。这个脚本文件可以让我们在运行时根据需要动态修改日志记录级别。
+
+例如，在脚本文件里，我们可以写如下代码：
+
+```javascript
+var ctx = org.apache.logging.log4j.LogManager.getContext(false);
+var config = ctx.getConfiguration();
+var loggerConfig = config.getLoggerConfig("com.example");
+loggerConfig.setLevel(org.apache.logging.log4j.Level.DEBUG);
+ctx.updateLoggers(config);
+```
+
+这个脚本将应用程序名称为“com.example”的Logger的记录级别设置为DEBUG。当在生产环境中运行时，我们可以用这个脚本将这个级别降低到ERROR，以减少不必要的日志记录。
+
+4. 异步日志
+
+默认情况下，Log4j2 使用同步日志，即所有日志操作都是在当前线程中执行的。但在高并发或大规模应用程序中，同步日志可能会对性能造成负面影响。
+
+Log4j2 提供了异步日志记录机制，可以让日志操作在单独的线程中执行，以提高应用程序的性能和响应性能。在 log4j2.xml 中配置异步日志非常方便，只需要加入以下代码即可：
+
+```xml
+<Appenders>
+  <Async name="Async">
+    <AppenderRef ref="RollingFile" />
+  </Async>
+</Appenders>
+
+<Loggers>
+  <Root level="INFO">
+    <AppenderRef ref="Async" />
+  </Root>
+</Loggers>
+```
+
+这个配置会将日志记录到一个异步 Appender 中，并在 Root Logger 中引用它。当需要配置异步日志时，还可以使用其他的相关配置参数，例如缓冲区大小、丢弃策略等。
+
+5. 过滤器
+
+Log4j2 还支持过滤器，可以过滤掉某些不需要的日志消息。例如，在 log4j2.xml 中加入以下代码：
+
+```xml
+<Appenders>
+  <RollingFile name="RollingFile" fileName="logs/app.log" filePattern="logs/app-%d{yyyy-MM-dd}.log.gz">
+    <PatternLayout>
+      <pattern>%d{yyyy-MM-dd HH:mm:ss.SSS} [%t] %-5level %logger{36} - %msg%n</pattern>
+    </PatternLayout>
+    <Policies>
+      <TimeBasedTriggeringPolicy />
+    </Policies>
+    <DefaultRolloverStrategy max="7"/>
+    <Filters>
+      <ThresholdFilter level="WARN" onMatch="DENY" onMismatch="NEUTRAL"/>
+      <RegexFilter regex=".*password=.*" onMatch="DENY" onMismatch="NEUTRAL"/>
+    </Filters>
+  </RollingFile>
+</Appenders>
+```
+
+这个配置使用了一些 `Filter` 来过滤日志消息。其中，`ThresholdFilter` 将日志消息级别低于 WARN 的过滤掉，而 `RegexFilter `则将包含 "`password`" 字符串的日志消息过滤掉。这个配置可以帮助我们排除一些敏感信息或无用的日志信息，减少日志文件的体积和难度。
+
+6. 多线程环境
+
+在多线程环境下，如何保证日志记录的线程安全性也是一个需要考虑的问题。Log4j2 在实现上已经考虑了线程安全性，不需要额外配置即可保证线程安全性。
+
+但需要注意的是，如果我们在日志消息中使用数据结构等复杂对象，这些对象可能需要考虑线程安全性问题。另外，如果需要关注日志输出的顺序，也需要注意控制日志记录的时机和条件。
+
+总结起来，Log4j2 是一个非常强大、灵活的日志框架，能够帮助我们轻松地进行日志管理和记录，提高应用程序的可靠性和稳定性。配置好 Log4j2 需要谨慎设计，并考虑应用程序的实际需求和场景。
 
 
 

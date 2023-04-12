@@ -1,0 +1,37 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Configuration status="INFO">
+    <Appenders>
+        <!-- Console Appender -->
+        <Console name="Console" target="SYSTEM_OUT">
+            <PatternLayout pattern="%d{yyyy-MM-dd HH:mm:ss.SSS} [%t] %-5level %logger{36} - %msg%n"/>
+        </Console>
+
+        <!-- File Appender -->
+        <RollingFile name="File" fileName="logs/app.log"
+                     filePattern="logs/$${date:yyyy-MM}/app-%d{MM-dd-yyyy}-%i.log.gz">
+            <PatternLayout pattern="%d{yyyy-MM-dd HH:mm:ss.SSS} [%t] %-5level %logger{36} - %msg%n"/>
+            <Policies>
+                <TimeBasedTriggeringPolicy/>
+                <SizeBasedTriggeringPolicy size="250 MB"/>
+            </Policies>
+            <DefaultRolloverStrategy max="3"/>
+        </RollingFile>
+
+        <!-- Async Appender -->
+        <Appenders>
+            <Async name="Async">
+                <AppenderRef ref="RollingFile"/>
+            </Async>
+        </Appenders>
+    </Appenders>
+    <Loggers>
+        <!-- Root Logger -->
+        <Root level="INFO">
+            <AppenderRef ref="Async"/>
+
+            <!-- Reference to the LoggerContext -->
+            <Script fileName="dynamic-log-level.js" language="javascript"/>
+            <ScriptRef ref="dynamic-log-level"/>
+        </Root>
+    </Loggers>
+</Configuration>

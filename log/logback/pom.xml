@@ -9,53 +9,19 @@
         <relativePath/> <!-- lookup parent from repository -->
     </parent>
     <groupId>com.joeljhou</groupId>
-    <artifactId>exception</artifactId>
+    <artifactId>logback</artifactId>
     <version>0.0.1-SNAPSHOT</version>
-    <name>exception</name>
-    <description>exception</description>
+    <name>logback</name>
+    <description>logback</description>
     <properties>
         <java.version>1.8</java.version>
     </properties>
     <dependencies>
-        <!-- web -->
         <dependency>
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-web</artifactId>
         </dependency>
 
-        <!-- 参数验证 -->
-        <dependency>
-            <groupId>org.hibernate.validator</groupId>
-            <artifactId>hibernate-validator</artifactId>
-        </dependency>
-
-        <!-- 日志 -->
-        <dependency>
-            <groupId>org.slf4j</groupId>
-            <artifactId>slf4j-log4j12</artifactId>
-            <version>2.0.6</version>
-        </dependency>
-        <dependency>
-            <groupId>log4j</groupId>
-            <artifactId>log4j</artifactId>
-            <version>1.2.17</version>
-        </dependency>
-
-        <!-- 简化代码 -->
-        <dependency>
-            <groupId>org.projectlombok</groupId>
-            <artifactId>lombok</artifactId>
-            <version>1.18.26</version>
-        </dependency>
-
-        <!-- 工具类 -->
-        <dependency>
-            <groupId>org.apache.commons</groupId>
-            <artifactId>commons-lang3</artifactId>
-            <version>3.12.0</version>
-        </dependency>
-
-        <!-- 测试 -->
         <dependency>
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-test</artifactId>
